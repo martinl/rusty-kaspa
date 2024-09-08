@@ -80,7 +80,7 @@ jobs:
           echo "archive=${archive}" >> $GITHUB_ENV
           echo "asset_name=${asset_name}" >> $GITHUB_ENV
 
-      - name: Build on MacOS
+      - name: Build on macOS
         if: runner.os == 'macOS'
         run: |
           cargo build --bin kaspad --release
@@ -92,6 +92,21 @@ jobs:
           cp target/release/simpa bin/
           cp target/release/rothschild bin/
           cp target/release/kaspa-wallet bin/
+
+      - name: "Notarize and Staple macOS Release Build"
+        if: runner.os == 'macOS'
+        uses: GuillaumeFalourd/notary-tools@v1
+        with:
+          product_path: "$PATH_TO_PKG_OR_APP"
+          apple_id: ${{ secrets.NOTARIZATION_USERNAME }}
+          password: ${{ secrets.NOTARIZATION_PASSWORD }}
+          team_id: ${{ secrets.NOTARIZATION_TEAMID }}
+          staple: true
+          xcode_path: '/Applications/Xcode.app'
+
+      - name: Package macOS
+        if: runner.os == 'macOS'
+        run: |
           archive="bin/rusty-kaspa-${{ github.event.release.tag_name }}-osx.zip"
           asset_name="rusty-kaspa-${{ github.event.release.tag_name }}-osx.zip"
           zip -r "${archive}" ./bin/*
